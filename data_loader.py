@@ -26,7 +26,7 @@ class DataLoader:
         self.batch_size = batch_size
 
     def _unpickle(self, filename):
-        filename = os.path.join("./data/cifar-10-batches-py", filename)
+        filename = os.path.join("./dataset/cifar-10-batches-py", filename)
         with open(filename, 'rb') as file:
             data = pickle.load(file, encoding='bytes')
             return data
