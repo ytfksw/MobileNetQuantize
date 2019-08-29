@@ -1,3 +1,5 @@
+import os
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -23,24 +25,70 @@ class DataLoader:
         self.shuffle = shuffle
         self.batch_size = batch_size
 
+    def _unpickle(self, filename):
+        filename = os.path.join("./data/cifar-10-batches-py", filename)
+        with open(filename, 'rb') as file:
+            data = pickle.load(file, encoding='bytes')
+            return data
+
+    def _load_data(self, filename):
+        # Load the pickled data-file.
+        data = self._unpickle(filename)
+
+        # Get the raw images.
+        images = data[b'data']
+
+        # Get the class-numbers for each image. Convert to numpy-array.
+        labels = np.array(data[b'labels'])
+
+        return images, labels
+
     def load_data(self):
-        # Please make sure to change this function to load your train/validation/test data.
-        train_data = np.array([plt.imread('./data/test_images/0.jpg'), plt.imread('./data/test_images/1.jpg'),
-                      plt.imread('./data/test_images/2.jpg'), plt.imread('./data/test_images/3.jpg')])
-        self.X_train = train_data
-        self.y_train = np.array([284, 264, 682, 2])
+        # train
+        files = ["data_batch_1", "data_batch_2", "data_batch_3", "data_batch_4", "data_batch_5"]
+        data = [self._load_data(filename) for filename in files]
 
-        val_data = np.array([plt.imread('./data/test_images/0.jpg'), plt.imread('./data/test_images/1.jpg'),
-                    plt.imread('./data/test_images/2.jpg'), plt.imread('./data/test_images/3.jpg')])
+        images = [images for images, labels in data]
+        images = np.concatenate(images, axis=0)
 
-        self.X_val = val_data
-        self.y_val = np.array([284, 264, 682, 2])
+        images = images.reshape((images.shape[0], 3, 32, 32))
+        images = images.transpose([0, 2, 3, 1])
 
-        self.train_data_len = self.X_train.shape[0]
-        self.val_data_len = self.X_val.shape[0]
+        from scipy.misc import imresize
+        images_reshape = np.zeros((images.shape[0], 224, 224, 3))
+        for i, image in enumerate(images):
+            images_reshape[i] = imresize(image, (224, 224))
+        self.X_train = images_reshape
+
+        labels = [labels for images, labels in data]
+        self.y_train = np.concatenate(labels, axis=0)
+
+        # test
+        files = ["test_batch"]
+        data = [self._load_data(filename) for filename in files]
+
+        images = [images for images, labels in data]
+        images = np.concatenate(images, axis=0)
+
+        images = images.reshape((images.shape[0], 3, 32, 32))
+        images = images.transpose([0, 2, 3, 1])
+
+        from scipy.misc import imresize
+        images_reshape = np.zeros((images.shape[0], 224, 224, 3))
+        for i, image in enumerate(images):
+            images_reshape[i] = imresize(image, (224, 224))
+        self.X_val = images_reshape
+
+        labels = [labels for images, labels in data]
+        self.y_val = np.concatenate(labels, axis=0)
+
+        # data statics
+        self.train_data_len = len(self.X_train)
+        self.val_data_len = len(self.X_val)
         img_height = 224
         img_width = 224
         num_channels = 3
+
         return img_height, img_width, num_channels, self.train_data_len, self.val_data_len
 
     def generate_batch(self, type='train'):
