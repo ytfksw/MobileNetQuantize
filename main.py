@@ -1,10 +1,14 @@
 from utils import parse_args, create_experiment_dirs, calculate_flops
-from model import MobileNet
+from model import MobileNet, MobileNetQuantize
 from train import Train
 from data_loader import DataLoader
 from summarizer import Summarizer
 import tensorflow as tf
 
+from quantizations import (
+    binary_mean_scaling_quantizer,
+    linear_mid_tread_half_quantizer,
+)
 
 def main():
     # Parse the JSON arguments
@@ -34,7 +38,24 @@ def main():
 
     # Model creation
     print("Building the model...")
-    model = MobileNet(config_args)
+    if config_args.quantize == True:
+        print('Quantized model created')
+        # Quantized model creation
+        activation_quantizer = linear_mid_tread_half_quantizer
+        activation_quantizer_kwargs = {
+            'bit': 2,
+            'max_value': 2
+        }
+        weight_quantizer = binary_mean_scaling_quantizer
+        weight_quantizer_kwargs = {}
+        model = MobileNetQuantize(config_args,
+                        activation_quantizer=activation_quantizer,
+                        activation_quantizer_kwargs=activation_quantizer_kwargs,
+                        weight_quantizer=weight_quantizer,
+                        weight_quantizer_kwargs=weight_quantizer_kwargs)
+    else:
+        print('Full precision model created')
+        model = MobileNet(config_args)
     print("Model is built successfully\n\n")
 
     # Summarizer creation

@@ -4,6 +4,7 @@ import os
 from utils import load_obj, save_obj
 import numpy as np
 
+import functools
 
 class MobileNet:
     """
@@ -11,7 +12,9 @@ class MobileNet:
     """
 
     def __init__(self,
-                 args):
+                 args,
+                 activation=tf.nn.relu6,
+                 custom_getter=None):
 
         # init parameters and input
         self.X = None
@@ -28,6 +31,8 @@ class MobileNet:
         self.args = args
         self.mean_img = None
         self.nodes = dict()
+        self.activation = activation
+        self.custom_getter = custom_getter
 
         self.pretrained_path = os.path.realpath(self.args.pretrained_path)
 
@@ -70,7 +75,7 @@ class MobileNet:
             # Model is here!
             conv1_1 = conv2d('conv_1', preprocessed_input, num_filters=int(round(32 * self.args.width_multiplier)),
                              kernel_size=(3, 3),
-                             padding='SAME', stride=(2, 2), activation=tf.nn.relu6,
+                             padding='SAME', stride=(2, 2), activation=self.activation,
                              batchnorm_enabled=self.args.batchnorm_enabled,
                              is_training=self.is_training, l2_strength=self.args.l2_strength, bias=self.args.bias)
             self.__add_to_nodes([conv1_1])
@@ -80,10 +85,11 @@ class MobileNet:
                                                                 num_filters=64, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(1, 1),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv2_1_dw, conv2_1_pw])
 
             conv2_2_dw, conv2_2_pw = depthwise_separable_conv2d('conv_ds_3', conv2_1_pw,
@@ -91,10 +97,11 @@ class MobileNet:
                                                                 num_filters=128, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(2, 2),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv2_2_dw, conv2_2_pw])
             ############################################################################################
             conv3_1_dw, conv3_1_pw = depthwise_separable_conv2d('conv_ds_4', conv2_2_pw,
@@ -102,10 +109,11 @@ class MobileNet:
                                                                 num_filters=128, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(1, 1),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv3_1_dw, conv3_1_pw])
 
             conv3_2_dw, conv3_2_pw = depthwise_separable_conv2d('conv_ds_5', conv3_1_pw,
@@ -113,10 +121,11 @@ class MobileNet:
                                                                 num_filters=256, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(2, 2),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv3_2_dw, conv3_2_pw])
             ############################################################################################
             conv4_1_dw, conv4_1_pw = depthwise_separable_conv2d('conv_ds_6', conv3_2_pw,
@@ -124,10 +133,11 @@ class MobileNet:
                                                                 num_filters=256, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(1, 1),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv4_1_dw, conv4_1_pw])
 
             conv4_2_dw, conv4_2_pw = depthwise_separable_conv2d('conv_ds_7', conv4_1_pw,
@@ -135,10 +145,11 @@ class MobileNet:
                                                                 num_filters=512, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(2, 2),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv4_2_dw, conv4_2_pw])
             ############################################################################################
             conv5_1_dw, conv5_1_pw = depthwise_separable_conv2d('conv_ds_8', conv4_2_pw,
@@ -146,10 +157,11 @@ class MobileNet:
                                                                 num_filters=512, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(1, 1),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv5_1_dw, conv5_1_pw])
 
             conv5_2_dw, conv5_2_pw = depthwise_separable_conv2d('conv_ds_9', conv5_1_pw,
@@ -157,10 +169,11 @@ class MobileNet:
                                                                 num_filters=512, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(1, 1),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv5_2_dw, conv5_2_pw])
 
             conv5_3_dw, conv5_3_pw = depthwise_separable_conv2d('conv_ds_10', conv5_2_pw,
@@ -168,10 +181,11 @@ class MobileNet:
                                                                 num_filters=512, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(1, 1),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv5_3_dw, conv5_3_pw])
 
             conv5_4_dw, conv5_4_pw = depthwise_separable_conv2d('conv_ds_11', conv5_3_pw,
@@ -179,10 +193,11 @@ class MobileNet:
                                                                 num_filters=512, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(1, 1),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv5_4_dw, conv5_4_pw])
 
             conv5_5_dw, conv5_5_pw = depthwise_separable_conv2d('conv_ds_12', conv5_4_pw,
@@ -190,10 +205,11 @@ class MobileNet:
                                                                 num_filters=512, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(1, 1),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv5_5_dw, conv5_5_pw])
 
             conv5_6_dw, conv5_6_pw = depthwise_separable_conv2d('conv_ds_13', conv5_5_pw,
@@ -201,10 +217,11 @@ class MobileNet:
                                                                 num_filters=1024, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(2, 2),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv5_6_dw, conv5_6_pw])
             ############################################################################################
             conv6_1_dw, conv6_1_pw = depthwise_separable_conv2d('conv_ds_14', conv5_6_pw,
@@ -212,10 +229,11 @@ class MobileNet:
                                                                 num_filters=1024, kernel_size=(3, 3), padding='SAME',
                                                                 stride=(1, 1),
                                                                 batchnorm_enabled=self.args.batchnorm_enabled,
-                                                                activation=tf.nn.relu6,
+                                                                activation=self.activation,
                                                                 is_training=self.is_training,
                                                                 l2_strength=self.args.l2_strength,
-                                                                biases=(self.args.bias, self.args.bias))
+                                                                biases=(self.args.bias, self.args.bias),
+                                                                custom_getter=self.custom_getter)
             self.__add_to_nodes([conv6_1_dw, conv6_1_pw])
             ############################################################################################
             avg_pool = avg_pool_2d(conv6_1_pw, size=(7, 7), stride=(1, 1))
@@ -288,3 +306,48 @@ class MobileNet:
             self.global_step_tensor = tf.Variable(0, trainable=False, name='global_step')
             self.global_step_input = tf.placeholder('int32', None, name='global_step_input')
             self.global_step_assign_op = self.global_step_tensor.assign(self.global_step_input)
+
+
+class MobileNetQuantize(MobileNet):
+    """
+    MobileNetQuantize Class
+    """
+
+    def __init__(self,
+                 args,
+                 activation_quantizer=None,
+                 activation_quantizer_kwargs=None,
+                 weight_quantizer=None,
+                 weight_quantizer_kwargs=None):
+
+                activation_quantizer_kwargs = activation_quantizer_kwargs if activation_quantizer_kwargs is not None else {}
+                weight_quantizer_kwargs = weight_quantizer_kwargs if weight_quantizer_kwargs is not None else {}
+
+                activation = activation_quantizer(**activation_quantizer_kwargs)
+                weight_quantization = weight_quantizer(**weight_quantizer_kwargs)
+                custom_getter = functools.partial(self._quantized_variable_getter,
+                                                    weight_quantization=weight_quantization)
+                assert weight_quantizer
+                assert activation_quantizer
+                super().__init__(args,
+                    activation=activation,
+                    custom_getter=custom_getter)
+
+    @staticmethod
+    def _quantized_variable_getter(getter, name, weight_quantization=None, *args, **kwargs):
+        """Get the quantized variables.
+        Use if to choose or skip the target should be quantized.
+        Args:
+            getter: Default from tensorflow.
+            name: Default from tensorflow.
+            weight_quantization: Callable object which quantize variable.
+            args: Args.
+            kwargs: Kwargs.
+        """
+        assert callable(weight_quantization)
+        var = getter(name, *args, **kwargs)
+        with tf.variable_scope(name):
+            # Apply weight quantize to variable whose last word of name is "kernel".
+            if "kernel" == var.op.name.split("/")[-1]:
+                return weight_quantization(var)
+        return var

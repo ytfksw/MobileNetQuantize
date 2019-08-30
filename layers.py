@@ -66,7 +66,6 @@ def conv2d(name, x, w=None, num_filters=16, kernel_size=(3, 3), padding='SAME', 
         conv_o_b = __conv2d_p(scope, x=x, w=w, num_filters=num_filters, kernel_size=kernel_size, stride=stride,
                               padding=padding,
                               initializer=initializer, l2_strength=l2_strength, bias=bias)
-
         if batchnorm_enabled:
             conv_o_bn = tf.layers.batch_normalization(conv_o_b, training=is_training)
             if not activation:
@@ -145,10 +144,11 @@ def depthwise_separable_conv2d(name, x, w_depthwise=None, w_pointwise=None, widt
                                padding='SAME', stride=(1, 1),
                                initializer=tf.contrib.layers.xavier_initializer(), l2_strength=0.0, biases=(0.0, 0.0),
                                activation=None, batchnorm_enabled=True,
-                               is_training=True):
+                               is_training=True,
+                               custom_getter=None):
     """Implementation of depthwise separable 2D convolution operator as in MobileNet paper"""
     total_num_filters = int(round(num_filters * width_multiplier))
-    with tf.variable_scope(name) as scope:
+    with tf.variable_scope(name, custom_getter=custom_getter) as scope:
         conv_a = depthwise_conv2d('depthwise', x=x, w=w_depthwise, kernel_size=kernel_size, padding=padding,
                                   stride=stride,
                                   initializer=initializer, l2_strength=l2_strength, bias=biases[0],

@@ -1,5 +1,5 @@
 {
-  "experiment_dir": "full_precision",
+  "experiment_dir": "quantize",
   "num_epochs": 100,
   "num_classes": 10,
   "batch_size": 32,
@@ -16,5 +16,5 @@
   "test_every": 5,
   "to_train": true,
   "to_test": true,
-  "quantize": false
+  "quantize": true
 }
