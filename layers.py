@@ -72,11 +72,13 @@ def conv2d(name, x, w=None, num_filters=16, kernel_size=(3, 3), padding='SAME', 
                 conv_a = conv_o_bn
             else:
                 conv_a = activation(conv_o_bn)
+                __variable_summaries(conv_a, name_scope='activation')
         else:
             if not activation:
                 conv_a = conv_o_b
             else:
                 conv_a = activation(conv_o_b)
+                __variable_summaries(conv_a, name_scope='activation')
 
         def dropout_with_keep():
             return tf.nn.dropout(conv_a, dropout_keep_prob)
@@ -131,11 +133,13 @@ def depthwise_conv2d(name, x, w=None, kernel_size=(3, 3), padding='SAME', stride
                 conv_a = conv_o_bn
             else:
                 conv_a = activation(conv_o_bn)
+                __variable_summaries(conv_a, name_scope='activation')
         else:
             if not activation:
                 conv_a = conv_o_b
             else:
                 conv_a = activation(conv_o_b)
+                __variable_summaries(conv_a, name_scope='activation')
     return conv_a
 
 
@@ -154,11 +158,9 @@ def depthwise_separable_conv2d(name, x, w_depthwise=None, w_pointwise=None, widt
                                   initializer=initializer, l2_strength=l2_strength, bias=biases[0],
                                   activation=activation,
                                   batchnorm_enabled=batchnorm_enabled, is_training=is_training)
-
         conv_o = conv2d('pointwise', x=conv_a, w=w_pointwise, num_filters=total_num_filters, kernel_size=(1, 1),
                         initializer=initializer, l2_strength=l2_strength, bias=biases[1], activation=activation,
                         batchnorm_enabled=batchnorm_enabled, is_training=is_training)
-
     return conv_a, conv_o
 
 
@@ -321,13 +323,13 @@ def __variable_with_weight_decay(kernel_shape, initializer, wd):
 
 
 # Summaries for variables
-def __variable_summaries(var):
+def __variable_summaries(var, name_scope='summaries'):
     """
     Attach a lot of summaries to a Tensor (for TensorBoard visualization).
     :param var: variable to be summarized
     :return: None
     """
-    with tf.name_scope('summaries'):
+    with tf.name_scope(name_scope):
         mean = tf.reduce_mean(var)
         tf.summary.scalar('mean', mean)
         with tf.name_scope('stddev'):
