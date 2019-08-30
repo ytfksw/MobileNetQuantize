@@ -347,7 +347,11 @@ class MobileNetQuantize(MobileNet):
         assert callable(weight_quantization)
         var = getter(name, *args, **kwargs)
         with tf.variable_scope(name):
+            # print("all op", var.op.name)
             # Apply weight quantize to variable whose last word of name is "kernel".
-            if "kernel" == var.op.name.split("/")[-1]:
-                return weight_quantization(var)
+            if "weights" == var.op.name.split("/")[-1]:
+                # print("quantized op", var.op.name)
+                quantized_var = weight_quantization(var)
+                # tf.summary.histogram(quantized_var)
+                return quantized_var
         return var
