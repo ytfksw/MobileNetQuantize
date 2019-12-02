@@ -1,4 +1,10 @@
-# MobileNet
+# MobileNetQuantize
+
+## introduction
+This is an implementation of quantized MobileNet. This MobileNet is quantize by [blueoil](https://github.com/blue-oil/blueoil) quantization functions.
+
+---
+
 An implementation of `Google MobileNet` introduced in TensorFlow. According to the authors, `MobileNet` is a computationally efficient CNN architecture designed specifically for mobile devices with very limited computing power. It can be used for different applications including: Object-Detection, Finegrain Classification, Face Attributes and Large Scale Geo-Localization.
 
 Link to the original paper: [MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications](https://arxiv.org/abs/1704.04861)
